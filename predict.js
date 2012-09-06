@@ -14,8 +14,18 @@
 
     var usage = 'Usage: node predict.js [dictionary] [sequence]';
     var words = [];
-    var tree = {};
     var sequence;
+
+    var keyMap = {
+        2: 'abc',
+        3: 'def',
+        4: 'ghi',
+        5: 'jkl',
+        6: 'mno',
+        7: 'pqrs',
+        8: 'tuv',
+        9: 'xyz'
+    };
 
 
     // Some basic CLI parameter validation
@@ -36,6 +46,7 @@
     // ---------- Build tree from dictionary file ----------
 
     function buildTree() {
+        var tree = {};
 
         console.log('Building dictionary tree...');
 
@@ -81,8 +92,58 @@
             }
         });
 
-        //console.log(JSON.stringify(tree));
         console.log('Complete.');
+        return tree;
+    }
+
+
+    // ---------- Traverse tree with sequence ----------
+
+    function findWords(sequence, tree, words, currentWord) {
+        var current = tree;
+        var key = sequence.length > 0 ? parseInt(sequence.toString().substr(0, 1), 10) : null;
+
+        sequence = (sequence.length > 0) ? sequence.toString().substr(1) : '';
+        words = words || [];
+        currentWord = currentWord || '';
+
+        console.log('current: ' + current + ', key: ' + key + ', sequence: ' + sequence);
+
+        for (var leaf in current) {
+            var val = current[leaf];
+
+            console.log(leaf);
+
+            if (leaf !== '$') {
+                currentWord += leaf;
+            }
+
+            if (typeof(val) === 'number') {
+                words.push({word: currentWord, occurrences: val});
+            } else {
+                // If the current key number maps to leaf letter, we're matching so far
+                if (key && keyMap.hasOwnProperty(key) && keyMap[key].match(leaf)) {
+                    
+                    if (val.hasOwnProperty('$')) {
+                        words.push({word: currentWord, occurrences: val.$});
+                    }
+                
+                    findWords(sequence, val, words, currentWord);
+
+                // Otherwise we're just finishing word prefix matches
+                } else if (!key) {
+
+                    if (val.hasOwnProperty('$')) {
+                        words.push({word: currentWord, occurrences: val.$});
+                    }
+
+                    findWords('', val, words, currentWord);
+                }
+            }
+
+        }
+
+        return words;
     }
 
 
@@ -105,7 +166,8 @@
 
         console.log('Complete.');
 
-        buildTree();
+        var tree = buildTree();
+        console.log(findWords(sequence, tree));
     });
 
 }());
