@@ -27,6 +27,7 @@
         9: 'xyz'
     };
 
+
     // ---------- 'class'es ----------
 
     function Word(word, occurrences) {
@@ -109,6 +110,7 @@
             }
         });
 
+        console.log(JSON.stringify(tree));
         return tree;
     }
 
@@ -124,11 +126,14 @@
         currentWord = currentWord || '';
         depth = depth || 0;
 
+        // Check each leaf on this level
         for (var leaf in current) {
             var word = currentWord;
             var value = current[leaf];
             var key;
 
+            // If the leaf key is '$' handle things one level off since we
+            // ignore the '$' marker when digging into the tree
             if (leaf === '$') {
                 key = sequence.charAt(depth - 1);
                 if (depth >= sequence.length) {
@@ -142,14 +147,21 @@
                 }
             }
 
-            // If we're still tracing the prefix and the leaf's value maps to our key
+            // If the leaf's value maps to our key or we're still tracing
+            // the prefix to the end of the tree (`exact` is falsy), then
+            // "we must go deeper"...
             if ((key && keyMap.hasOwnProperty(key) && keyMap[key].indexOf(leaf) > -1) || (!key && !exact)) {
                 findWords(sequence, value, exact, words, word, depth + 1);
             }
         }
 
+        // Yeah, not as cool when not returning the recursive function call
+        // returns, but we gotta just rely on JS references since we may be
+        // going more than one way down the tree and we don't want to be
+        // breaking the leaf loop
         return words;
     }
+
 
     // ---------- Sort matches by occurrences ----------
 
@@ -162,8 +174,7 @@
 
     // ---------- Read dictionary file ----------
 
-    // Read file from filesystem while splitting into words
-    // TODO: implement some sort of buffered read if we need to handle much bigger files
+    // Read file from filesystem ("app" entry point)
 
     var time = new Date().getTime();
     console.log('Reading dictionary file...');
