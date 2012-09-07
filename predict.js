@@ -27,6 +27,25 @@
         9: 'xyz'
     };
 
+    // ---------- 'class'es ----------
+
+    function Word(word, occurrences) {
+        this.word = word;
+        this.occurrences = occurrences;
+    }
+
+    Word.prototype.toString = function () {
+        return this.word + ' (' + this.occurrences + ')';
+    };
+
+    Array.prototype.toString = function () {
+        var string = '';
+        this.forEach(function (word) {
+            string += word.toString() + '\n';
+        });
+        return string;
+    };
+
 
     // Some basic CLI parameter validation
 
@@ -47,8 +66,6 @@
 
     function buildTree() {
         var tree = {};
-
-        console.log('Building dictionary tree...');
 
         words.forEach(function (word) {
             var letters = word.split('');
@@ -92,8 +109,6 @@
             }
         });
 
-        console.log(JSON.stringify(tree));
-        console.log('Complete.');
         return tree;
     }
 
@@ -117,13 +132,13 @@
             if (leaf === '$') {
                 key = sequence.charAt(depth - 1);
                 if (depth >= sequence.length) {
-                    words.push({word: word, occurrences: value, $:true});
+                    words.push(new Word(word, value));
                 }
             } else {
                 key = sequence.charAt(depth);
                 word += leaf;
                 if (depth > sequence.length && typeof(value) === 'number') {
-                    words.push({word: word, occurrences: value});
+                    words.push(new Word(word, value));
                 }
             }
 
@@ -150,30 +165,70 @@
     // Read file from filesystem while splitting into words
     // TODO: implement some sort of buffered read if we need to handle much bigger files
 
+    var time = new Date().getTime();
     console.log('Reading dictionary file...');
 
     fs.readFile(process.argv[2], function (error, data) {
-        
+        console.log('Done. [' + (new Date().getTime() - time).toString() + 'ms]');
+
         if (error) {
             console.log(error + '\n');
             console.log('Error reading dictionary file, ' + usage);
             return;
         }
 
+        time = new Date().getTime();
+        console.log('Parsing dictionary contents...');
         words = data.toString();
         words = words.replace(/[:;!?",'\.\*\[\]\d\$]/g, '');
         words = words.replace(/\-\-/g, ' ');
         words = words.split(/\s+/g);
+        console.log('Done. [' + (new Date().getTime() - time).toString() + 'ms]');
 
-        console.log(words.join('\n'));
-
-        console.log('Complete.');
-
+        time = new Date().getTime();
+        console.log('Building dictionary tree...');
         var tree = buildTree();
-        words = findWords(sequence, tree);
-        words = sortWords(words);
+        console.log('Done. [' + (new Date().getTime() - time).toString() + 'ms]');
 
-        console.log(words);
+        time = new Date().getTime();
+        console.log('Finding exact matches...');
+        var exactWords = findWords(sequence, tree, true);
+        console.log('Done. [' + (new Date().getTime() - time).toString() + 'ms]');
+
+        time = new Date().getTime();
+        console.log('Finding all matches...');
+        words = findWords(sequence, tree);
+        console.log('Done. [' + (new Date().getTime() - time).toString() + 'ms]');
+
+        time = new Date().getTime();
+        console.log('Sorting exact matches...');
+        exactWords = sortWords(exactWords);
+        console.log('Done. [' + (new Date().getTime() - time).toString() + 'ms]');
+
+        time = new Date().getTime();
+        console.log('Sorting all matches...');
+        words = sortWords(words);
+        console.log('Done. [' + (new Date().getTime() - time).toString() + 'ms]');
+
+        console.log('\n');
+
+        if (exactWords.length > 0) {
+            console.log('Exact matches');
+            console.log('------------------------------');
+            console.log(exactWords.toString());
+        } else {
+            console.log('*    No exact matches  :(    *\n');
+            console.log('------------------------------\n');
+        }
+
+        if (words.length > 0) {
+            console.log('All matches');
+            console.log('------------------------------');
+            console.log(words.toString());
+        } else {
+            console.log('*       No matches  :\'(      *\n');
+            console.log('------------------------------\n');
+        }
     });
 
 }());
