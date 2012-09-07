@@ -100,32 +100,36 @@
 
     // ---------- Traverse tree with sequence ----------
 
-    function findWords(sequence, tree, words, currentWord) {
-        sequence = sequence.toString();
+    function findWords(sequence, tree, words, currentWord, depth) {
 
         var current = tree;
-        var key = sequence.length > 0 ? sequence.substr(0, 1) : undefined;
+        
+        sequence = sequence.toString();
         words = words || [];
         currentWord = currentWord || '';
-
-        sequence = sequence.substr(1);
+        depth = depth || 0;
 
         for (var leaf in current) {
             var word = currentWord;
             var value = current[leaf];
+            var key;
 
             if (leaf === '$') {
-                words.push({word: word, occurrences: value});
+                key = sequence.charAt(depth - 1);
+                if (depth >= sequence.length) {
+                    words.push({word: word, occurrences: value, depth: depth, $: true});
+                }
             } else {
+                key = sequence.charAt(depth);
                 word += leaf;
-                if (typeof(value) === 'number') {
-                    words.push({word: word, occurrences: value});
+                if (depth + 1 >= sequence.length && typeof(value) === 'number') {
+                    words.push({word: word, occurrences: value, depth: depth});
                 }
             }
 
             // If we're still tracing the prefix and the leaf's value maps to our key
             if ((key && keyMap.hasOwnProperty(key) && keyMap[key].indexOf(leaf) > -1) || !key) {
-                findWords(sequence, value, words, word);
+                findWords(sequence, value, words, word, depth + 1);
             }
         }
 
