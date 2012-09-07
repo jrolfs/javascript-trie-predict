@@ -68,7 +68,7 @@
                 } else if (typeof(existing) === 'number') {
                     // Increment end mark number, to account for duplicates
                     if (last) {
-                        existing++;
+                        leaf[letter]++;
 
                     // Otherwise, if we need to continue, create leaf object with '$' marker
                     } else {
@@ -92,6 +92,7 @@
             }
         });
 
+        console.log(JSON.stringify(tree));
         console.log('Complete.');
         return tree;
     }
@@ -100,47 +101,27 @@
     // ---------- Traverse tree with sequence ----------
 
     function findWords(sequence, tree, words, currentWord) {
-        var current = tree;
-        var key = sequence.length > 0 ? parseInt(sequence.toString().substr(0, 1), 10) : null;
+        sequence = sequence.toString();
 
-        sequence = (sequence.length > 0) ? sequence.toString().substr(1) : '';
+        var current = tree;
+        var key = sequence.length > 0 ? sequence.substr(0, 1) : undefined;
         words = words || [];
         currentWord = currentWord || '';
 
-        console.log('current: ' + current + ', key: ' + key + ', sequence: ' + sequence);
+        sequence = sequence.substr(1);
 
         for (var leaf in current) {
-            var val = current[leaf];
+            var word = leaf === '$' ? currentWord : currentWord + leaf;
+            var value = current[leaf];
 
-            console.log(leaf);
-
-            if (leaf !== '$') {
-                currentWord += leaf;
+            if (typeof(value) === 'number') {
+                words.push({word: word, occurrences: value});
             }
 
-            if (typeof(val) === 'number') {
-                words.push({word: currentWord, occurrences: val});
-            } else {
-                // If the current key number maps to leaf letter, we're matching so far
-                if (key && keyMap.hasOwnProperty(key) && keyMap[key].match(leaf)) {
-                    
-                    if (val.hasOwnProperty('$')) {
-                        words.push({word: currentWord, occurrences: val.$});
-                    }
-                
-                    findWords(sequence, val, words, currentWord);
-
-                // Otherwise we're just finishing word prefix matches
-                } else if (!key) {
-
-                    if (val.hasOwnProperty('$')) {
-                        words.push({word: currentWord, occurrences: val.$});
-                    }
-
-                    findWords('', val, words, currentWord);
-                }
+            // If we're still tracing the prefix and the leaf's value maps to our key
+            if ((key && keyMap.hasOwnProperty(key) && keyMap[key].indexOf(leaf) > -1) || !key) {
+                findWords(sequence, value, words, word);
             }
-
         }
 
         return words;
@@ -162,7 +143,7 @@
             return;
         }
 
-        words = data.toString().split(/[\s\-\.\*\$\d_,:;!?"]+/g);
+        words = data.toString().split(/[\s\-\.\*\$\d\(\)_,:;!?"]+/g);
 
         console.log('Complete.');
 
