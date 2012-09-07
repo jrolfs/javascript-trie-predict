@@ -111,11 +111,16 @@
         sequence = sequence.substr(1);
 
         for (var leaf in current) {
-            var word = leaf === '$' ? currentWord : currentWord + leaf;
+            var word = currentWord;
             var value = current[leaf];
 
-            if (typeof(value) === 'number') {
+            if (leaf === '$') {
                 words.push({word: word, occurrences: value});
+            } else {
+                word += leaf;
+                if (typeof(value) === 'number') {
+                    words.push({word: word, occurrences: value});
+                }
             }
 
             // If we're still tracing the prefix and the leaf's value maps to our key
@@ -143,7 +148,12 @@
             return;
         }
 
-        words = data.toString().split(/[\s\-\.\*\$\d\(\)_,:;!?"]+/g);
+        words = data.toString();
+        words = words.replace(/[:;!?",'\.\*\[\]\d\$]/g, '');
+        words = words.replace(/\-\-/g, ' ');
+        words = words.split(/\s+/g);
+
+        console.log(words.join('\n'));
 
         console.log('Complete.');
 
