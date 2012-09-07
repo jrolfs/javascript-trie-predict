@@ -110,7 +110,6 @@
             }
         });
 
-        console.log(JSON.stringify(tree));
         return tree;
     }
 
