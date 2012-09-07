@@ -97,7 +97,7 @@
                 // end '$' marker, increment the marker to account for duplicates
                 } else if (typeof(existing) === 'object' && last) {
                     if (existing.hasOwnProperty('$')) {
-                        existing.$++;
+                        leaf[letter].$++;
                     } else {
                         leaf[letter] = existing;
                         leaf[letter].$ = 1;
