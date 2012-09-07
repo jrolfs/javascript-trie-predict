@@ -100,7 +100,7 @@
 
     // ---------- Traverse tree with sequence ----------
 
-    function findWords(sequence, tree, words, currentWord, depth) {
+    function findWords(sequence, tree, exact, words, currentWord, depth) {
 
         var current = tree;
         
@@ -117,23 +117,31 @@
             if (leaf === '$') {
                 key = sequence.charAt(depth - 1);
                 if (depth >= sequence.length) {
-                    words.push({word: word, occurrences: value, depth: depth, $: true});
+                    words.push({word: word, occurrences: value, $:true});
                 }
             } else {
                 key = sequence.charAt(depth);
                 word += leaf;
-                if (depth + 1 >= sequence.length && typeof(value) === 'number') {
-                    words.push({word: word, occurrences: value, depth: depth});
+                if (depth > sequence.length && typeof(value) === 'number') {
+                    words.push({word: word, occurrences: value});
                 }
             }
 
             // If we're still tracing the prefix and the leaf's value maps to our key
-            if ((key && keyMap.hasOwnProperty(key) && keyMap[key].indexOf(leaf) > -1) || !key) {
-                findWords(sequence, value, words, word, depth + 1);
+            if ((key && keyMap.hasOwnProperty(key) && keyMap[key].indexOf(leaf) > -1) || (!key && !exact)) {
+                findWords(sequence, value, exact, words, word, depth + 1);
             }
         }
 
         return words;
+    }
+
+    // ---------- Sort matches by occurrences ----------
+
+    function sortWords(words, sequence) {
+        return words.sort(function (first, second) {
+            return second.occurrences - first.occurrences;
+        });
     }
 
 
@@ -162,7 +170,10 @@
         console.log('Complete.');
 
         var tree = buildTree();
-        console.log(findWords(sequence, tree));
+        words = findWords(sequence, tree);
+        words = sortWords(words);
+
+        console.log(words);
     });
 
 }());
